@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Roulette Lucky Draw (大樂透) — Demo</title>
+  <meta name="description" content="A smooth, springy roulette lucky draw (大樂透) demo. Spin the wheel and pick winners with style." />
+  <link rel="canonical" href="https://markincome.github.io/roulette-lucky-draw/" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="Roulette Lucky Draw (大樂透) — Demo" />
+  <meta property="og:description" content="Spin the wheel and pick winners—smooth, springy, and fun." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://markincome.github.io/roulette-lucky-draw/" />
+  <!-- Simple generated SVG preview as data URI (no external asset needed) -->
+  <meta property="og:image" content="data:image/svg+xml;utf8,
+  <svg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'>
+    <defs>
+      <linearGradient id='g' x1='0' x2='1'>
+        <stop offset='0%' stop-color='%23080' />
+        <stop offset='100%' stop-color='%2300bcd4' />
+      </linearGradient>
+    </defs>
+    <rect width='100%' height='100%' fill='url(%23g)'/>
+    <text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle'
+          font-family='Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, sans-serif'
+          font-size='72' fill='white' letter-spacing='1'>
+      Roulette Lucky Draw
+    </text>
+  </svg>" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Favicon (emoji data URL, no file needed) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%B0%3C/text%3E%3C/svg%3E">
+
+  <style>
+    :root{
+      --bg: #0b0f14;           /* dark base */
+      --fg: #e6f1ff;           /* light text */
+      --muted:#9fb3c8;
+      --brandA:#00d1b2;        /* teal */
+      --brandB:#5b9dff;        /* blue */
+      --card:#0f141b;
+      --accent:#ffdd57;        /* gold */
+      --ring: 0 0 0 3px rgba(91,157,255,.35);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#ffffff; --fg:#0a0f14; --muted:#4a5a6b; --card:#f5f7fb; }
+      .glass{ background:rgba(255,255,255,.65); }
+      .hero::before{ opacity:.18; }
+    }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; font:16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color:var(--fg); background:var(--bg);
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    a{ color:inherit; text-decoration:none }
+    .wrap{ max-width:1100px; margin:0 auto; padding:28px 20px }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+    }
+    .logo{ display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.2px }
+    .logo-badge{
+      width:36px; height:36px; border-radius:10px;
+      background: radial-gradient(120px 45px at 20% 30%, var(--brandA), transparent 55%),
+                  radial-gradient(120px 45px at 80% 70%, var(--brandB), transparent 55%),
+                  linear-gradient(135deg, #1a2330, #0e1520);
+      display:grid; place-items:center; color:white; font-size:18px; box-shadow: 0 6px 30px rgba(0,0,0,.28);
+    }
+    nav a{ opacity:.85; padding:6px 10px; border-radius:10px }
+    nav a:focus-visible, .btn:focus-visible{ outline:none; box-shadow:var(--ring) }
+    .hero{ position:relative; margin-top:24px; }
+    .hero::before{
+      content:""; position:absolute; inset:-60px -40px -20px;
+      background:
+        radial-gradient(800px 300px at 10% 20%, rgba(0,209,178,.25), transparent 60%),
+        radial-gradient(800px 300px at 90% 60%, rgba(91,157,255,.25), transparent 60%);
+      filter: blur(12px); opacity:.26; pointer-events:none;
+    }
+    .hero-grid{
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:32px; align-items:center;
+    }
+    @media (max-width: 900px){
+      .hero-grid{ grid-template-columns: 1fr; }
+      .preview{ order: -1; }
+    }
+    h1{
+      font-size: clamp(28px, 4.5vw, 44px); line-height:1.15; margin:8px 0 12px;
+      letter-spacing:.2px;
+    }
+    .tag{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.15));
+      border:1px solid rgba(255,255,255,.1); color:var(--muted); font-weight:600; font-size:13px;
+      backdrop-filter: blur(6px);
+    }
+    .lead{ color:var(--muted); font-size: clamp(16px, 2.1vw, 18px); margin:0 0 16px }
+    .actions{ display:flex; gap:12px; flex-wrap:wrap; margin:18px 0 0 }
+    .btn{
+      display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.2));
+      cursor:pointer; font-weight:700; letter-spacing:.2px;
+      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+      will-change: transform;
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, var(--brandA), var(--brandB));
+      border-color: transparent; color:#001018;
+      box-shadow: 0 12px 40px rgba(0, 198, 190, .25), 0 10px 28px rgba(91,157,255,.15);
+    }
+    .btn:hover{ transform: translateY(-2px) }
+    .btn:active{ transform: translateY(0) scale(.99) }
+    .btn .arrow{ transition: transform .2s ease }
+    .btn:hover .arrow{ transform: translateX(4px) }
+
+    /* Card */
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:20px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .feature{
+      display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin-top:26px;
+    }
+    .feature .it{
+      padding:16px; border-radius:16px; background:rgba(255,255,255,.03); border:1px dashed rgba(255,255,255,.08);
+      color:var(--muted); font-size:14px; text-align:center;
+    }
+    @media (max-width: 700px){ .feature{ grid-template-columns:1fr } }
+
+    /* Inline SVG preview wheel */
+    .preview{
+      aspect-ratio: 1 / 1; min-height: 300px; border-radius: 26px; padding: 16px;
+    }
+    .wheel{
+      width:100%; height:100%; display:grid; place-items:center; position:relative;
+      background: conic-gradient(from 0deg,
+        #2cd4bf 0 16.6%, #1f8efa 16.6% 33.3%, #23a26d 33.3% 50%,
+        #f6b73c 50% 66.6%, #ea4c89 66.6% 83.3%, #7b5cff 83.3% 100%);
+      border-radius:50%; box-shadow: inset 0 0 0 10px rgba(255,255,255,.08), inset 0 0 0 22px rgba(0,0,0,.22);
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float{ 0%{ transform: translateY(0) } 50%{ transform: translateY(-6px) } 100%{ transform: translateY(0) } }
+    .hub{
+      position:absolute; width:90px; height:90px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #ffd, #ffda57 40%, #caa10f);
+      box-shadow: inset 0 0 0 3px rgba(0,0,0,.18), 0 10px 30px rgba(0,0,0,.35);
+      display:grid; place-items:center; font-weight:900; color:#1a1200; letter-spacing:.5px;
+    }
+    .pointer{
+      position:absolute; top:-12px; left:50%; transform: translateX(-50%);
+      width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:18px solid var(--accent);
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,.35));
+    }
+
+    footer{
+      color:var(--muted); font-size:14px; padding:30px 0 16px; text-align:center;
+    }
+    .tiny{ font-size:12px; opacity:.8 }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header aria-label="Top">
+      <div class="logo">
+        <div class="logo-badge" aria-hidden="true">🎯</div>
+        <span>Roulette Lucky Draw</span>
+      </div>
+      <nav>
+        <a href="index.html" lang="zh-Hant">中文</a>
+        <a href="https://markincome.github.io/roulette-lucky-draw/src/roulette-number-49.html">Demo</a>
+        <a href="https://github.com/markincome/roulette-lucky-draw" rel="noopener">Source</a>
+      </nav>
+    </header>
+
+    <main class="hero">
+      <div class="hero-grid">
+        <section>
+          <span class="tag" aria-label="Tag">大樂透 · Smooth · Springy</span>
+          <h1>Spin. Slow down. Celebrate.<br/>A stunning, simple lucky draw demo.</h1>
+          <p class="lead">
+            A polished roulette experience for events and giveaways.
+            Clean UX, springy motion, and no repeats between draws.
+            Works right in the browser.
+          </p>
+          <div class="actions" role="group" aria-label="Actions">
+            <a class="btn primary" href="https://markincome.github.io/roulette-lucky-draw/src/roulette-number-49.html">
+              <span>Try the Live Demo</span>
+              <span class="arrow">→</span>
+            </a>
+            <a class="btn" href="https://github.com/markincome/roulette-lucky-draw" rel="noopener">
+              <span>View on GitHub</span>
+              <span class="arrow">↗</span>
+            </a>
+          </div>
+
+          <div class="feature">
+            <div class="it">Smooth spring-physics feel</div>
+            <div class="it">No duplicate winners</div>
+            <div class="it">Seeded shuffle option</div>
+          </div>
+        </section>
+
+        <aside class="preview glass" aria-label="Wheel preview">
+          <div class="wheel" aria-hidden="true">
+            <div class="pointer"></div>
+            <div class="hub">SPIN</div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Info Card -->
+      <section class="glass" style="margin-top:28px; padding:20px;">
+        <h2 style="margin:0 0 8px; font-size:20px;">What’s inside the demo?</h2>
+        <p style="margin:0; color:var(--muted)">
+          Adjustable max number (default 49), number of draws (default 6), seeded shuffle,
+          winners list with remove/restore, and a stop button while spinning.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p class="tiny">
+        Built for <strong>Roulette Lucky Draw (大樂透)</strong>. Deployed with GitHub Pages.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // Subtle interactive polish: press space/enter to jump to demo
+    const goDemo = () => location.href = "https://markincome.github.io/roulette-lucky-draw/src/roulette-number-49.html";
+    window.addEventListener('keydown', (e) => {
+      if (['Enter',' '].includes(e.key)) { e.preventDefault(); goDemo(); }
+    });
+
+    // Respect reduced motion
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      document.querySelector('.wheel')?.style.removeProperty('animation');
+    }
+  </script>
+</body>
+</html>

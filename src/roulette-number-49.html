@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Roulette Lucky Draw (大樂透)</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #121a33;
+    --muted: #8ea3c7;
+    --accent: #5eead4;
+    --accent-2: #60a5fa;
+    --danger: #f87171;
+    --ok: #34d399;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: radial-gradient(1200px 800px at 70% -10%, #1f2a52 0%, var(--bg) 60%);
+    color: #e6eefc;
+    min-height: 100vh; display: grid; place-items: center; padding: 24px;
+  }
+  .app {
+    width: min(1100px, 100%); display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px;
+  }
+  @media (max-width: 920px) {
+    .app { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: linear-gradient(180deg, #141c39, #0f1530);
+    border: 1px solid #233061;
+    border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  .controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .controls .row { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+  input[type="number"], input[type="text"] {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #233061;
+    background: #0b1330; color: #e8f0ff; outline: none;
+  }
+  .btn {
+    appearance: none; border: 1px solid #22305f; background: #111a3b; color: #eaf2ff;
+    padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600;
+    transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+  }
+  .btn:hover { transform: translateY(-1px); background: #0f1633; }
+  .btn:disabled { opacity: .5; pointer-events: none; }
+  .btn.ok { border-color: #1d4e44; background: #0d2c28; }
+  .btn.danger { border-color: #5b1f27; background: #2a0e13; color: #ffdfe2; }
+  .btn.accent { border-color: #2d3d77; background: #0e1e52; }
+  .seedbox {
+    display: flex; gap: 8px; width: 100%;
+  }
+  .seedbox input { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .board {
+    position: relative; aspect-ratio: 1 / 1; width: 100%; display: grid; place-items: center;
+  }
+  canvas { width: 100%; height: 100%; border-radius: 50%; }
+  .center-ui {
+    position: absolute; width: 36%; max-width: 220px; aspect-ratio: 1 / 1; border-radius: 50%;
+    display: grid; place-items: center; text-align: center;
+    background: radial-gradient(100px 100px at 30% 20%, #1a2550 0%, #0d1538 60%);
+    border: 2px solid #203064; box-shadow: inset 0 0 20px rgba(0,0,0,.5), 0 8px 30px rgba(0,0,0,.4);
+  }
+  .spin-btn {
+    display: inline-block; padding: 10px 18px; border-radius: 999px; border: 2px solid #1f7a6e;
+    background: linear-gradient(180deg, #0a5248, #093b34); color: #dbfff8; font-weight: 800; letter-spacing: .06em;
+    cursor: pointer; user-select: none; box-shadow: 0 4px 14px rgba(0,0,0,.5);
+    transition: transform .08s ease, filter .2s ease;
+  }
+  .spin-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+  .arrow {
+    position: absolute; top: 10px; width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
+    border-bottom: 26px solid var(--accent); filter: drop-shadow(0 0 6px rgba(94,234,212,.7));
+  }
+  .statusbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; color: var(--muted); font-size: 13px;
+  }
+  .winners {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;
+  }
+  .chip {
+    position: relative;
+    padding: 8px 12px 8px 12px; border-radius: 999px; font-weight: 800;
+    background: radial-gradient(160px 120px at 30% 30%, #1b2856, #0e1536);
+    border: 1px solid #2c3b7a; color: #dffbf6;
+  }
+  .chip .x {
+    position: absolute; right: -6px; top: -6px; width: 18px; height: 18px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 11px; background: #2b0f14; border: 1px solid #5b1f27; color: #ffdfe2; cursor: pointer;
+  }
+  .legend { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .small { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="board">
+        <div class="arrow" aria-hidden="true"></div>
+        <canvas id="wheel" width="1000" height="1000" aria-label="Lucky draw wheel"></canvas>
+        <div class="center-ui">
+          <div>
+            <div id="spinBtn" class="spin-btn">SPIN</div>
+            <div class="legend" id="centerHint">Click SPIN or press Space</div>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar">
+        <div>Rotation: <span id="dbgRot" class="small">0°</span></div>
+        <div>Result: <strong id="lastResult">—</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label for="maxInput">Maximum number</label>
+          <input id="maxInput" type="number" min="2" max="360" value="49" />
+        </div>
+        <div>
+          <label for="drawsInput">Number of draws</label>
+          <input id="drawsInput" type="number" min="1" max="100" value="6" />
+        </div>
+
+        <div class="row">
+          <div class="seedbox">
+            <input id="seedInput" type="text" placeholder="Seed (editable)" />
+            <button id="seedBtn" class="btn accent">Seed</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="spinAllBtn" class="btn ok">SPIN</button>
+          <button id="stopBtn" class="btn danger" disabled>Stop</button>
+          <button id="clearBtn" class="btn">Clear</button>
+        </div>
+
+        <div class="row">
+          <div class="legend">Tip: You can edit the seed text anytime for deterministic draws.</div>
+        </div>
+      </div>
+
+      <h3 style="margin:16px 0 6px 0;">Winners</h3>
+      <div id="winners" class="winners"></div>
+      <div class="legend">Click “×” to remove a winner and return that number to the pool.</div>
+    </div>
+  </div>
+
+<script>
+/* ---------- Seeded PRNG (xoshiro128** with xfnv1a seeding) ---------- */
+function xfnv1a(str) {
+  // 32-bit FNV-1a string hash
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return () => (h = Math.imul(h, 0x01000193) ^ (h >>> 13), h >>> 0);
+}
+function xoshiro128ss(a, b, c, d) {
+  // returns function -> [0,1)
+  return function() {
+    const rotl = (x,k)=> (x << k) | (x >>> (32 - k));
+    const t = Math.imul(b, 5) << 7 | (Math.imul(b, 5) >>> 25);
+    const r = (t * 9) >>> 0;
+    const t2 = b << 9 >>> 0;
+    c ^= a; d ^= b; b ^= c; a ^= d; c ^= t2; d = rotl(d, 11) >>> 0;
+    // to float in [0,1)
+    return (r >>> 0) / 2**32;
+  }
+}
+function makeRngFromSeed(seedStr) {
+  const hash = xfnv1a(seedStr);
+  let a = hash(), b = hash(), c = hash(), d = hash();
+  // avoid all-zero
+  if ((a|b|c|d) === 0) { a = 1; }
+  return xoshiro128ss(a,b,c,d);
+}
+function randomSeedString() {
+  const array = new Uint32Array(4);
+  crypto.getRandomValues(array);
+  return Array.from(array).map(x => x.toString(16).padStart(8,'0')).join('');
+}
+
+/* ---------- Wheel drawing ---------- */
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const dbgRot = document.getElementById('dbgRot');
+const lastResultEl = document.getElementById('lastResult');
+const winnersBox = document.getElementById('winners');
+const spinBtn = document.getElementById('spinBtn');
+const spinAllBtn = document.getElementById('spinAllBtn');
+const stopBtn = document.getElementById('stopBtn');
+const clearBtn = document.getElementById('clearBtn');
+const maxInput = document.getElementById('maxInput');
+const drawsInput = document.getElementById('drawsInput');
+const seedBtn = document.getElementById('seedBtn');
+const seedInput = document.getElementById('seedInput');
+
+let N = clamp(parseInt(maxInput.value||'49',10), 2, 360);
+let available = new Set(Array.from({length: N}, (_,i)=> i+1)); // 1..N
+let winners = [];
+let rng = makeRngFromSeed(seedInput.value || (seedInput.value = randomSeedString()));
+let currentRotation = 0; // degrees
+let spinning = false;
+let cancelSpin = false;
+let scheduledDraws = 0;
+let radius, center;
+
+function clamp(x, a, b){ return Math.min(b, Math.max(a, x)); }
+
+function resizeCanvas() {
+  // already high-res: width/height fixed; CSS scales. Keep crisp labels by scaling transforms.
+  radius = canvas.width/2 * 0.92;
+  center = { x: canvas.width/2, y: canvas.height/2 };
+}
+resizeCanvas();
+
+function colorForIndex(i, total) {
+  // pleasant alternating palette across the circle
+  const hue = (i * (360/total)) % 360;
+  return `hsl(${hue}deg 70% 42%)`;
+}
+function drawWheel() {
+  const total = N;
+  const slice = 2*Math.PI / total;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate((currentRotation) * Math.PI/180); // rotate wheel
+
+  for (let i = 0; i < total; i++) {
+    const start = i * slice;
+    const end = start + slice;
+
+    // background slice
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0, radius, start, end);
+    ctx.closePath();
+
+    const num = i+1;
+    const inPool = available.has(num);
+    ctx.fillStyle = inPool ? colorForIndex(i,total) : 'hsl(220 20% 18%)';
+    ctx.fill();
+
+    // thin separators
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0,0, radius, start, end);
+    ctx.stroke();
+
+    // label
+    const mid = start + slice/2;
+    const labelR = radius * 0.78;
+    const x = Math.cos(mid) * labelR;
+    const y = Math.sin(mid) * labelR;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(mid);
+    ctx.fillStyle = inPool ? '#f2fbff' : '#91a2be';
+    ctx.font = `${Math.max(16, Math.floor(radius*0.08))}px ui-monospace, Menlo, Consolas, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(num.toString(), 0, 0);
+    ctx.restore();
+  }
+
+  ctx.restore();
+
+  // center ring aesthetic
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.beginPath();
+  ctx.arc(0,0, radius*0.42, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.restore();
+
+  dbgRot.textContent = `${(currentRotation%360).toFixed(1)}°`;
+}
+
+/* ---------- Spin animation (springy with gentle overshoot) ---------- */
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+function easeOutBack(t, s=1.2){ return 1 + (s+1)*Math.pow(t-1,3) + s*Math.pow(t-1,2); }
+
+function animateRotation(fromDeg, toDeg, duration, easing, onUpdate, onDone) {
+  const start = performance.now();
+  function frame(now) {
+    const t = clamp((now - start) / duration, 0, 1);
+    const v = easing ? easing(t) : t;
+    const val = fromDeg + (toDeg - fromDeg) * v;
+    onUpdate(val);
+    if (cancelSpin && t < 0.98) {
+      // snap quickly to end if forced stop
+      onUpdate(toDeg);
+      onDone && onDone();
+      return;
+    }
+    if (t < 1) requestAnimationFrame(frame);
+    else onDone && onDone();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* Compute rotation that centers a number at the top (arrow) */
+function rotationForNumber(num) {
+  // segment centered at angleCenter; we want that center to align to 0deg (top of canvas)
+  const segDeg = 360 / N;
+  const idx = (num - 1); // 0-based
+  const angleCenter = (idx + 0.5) * segDeg;
+  // Our wheel is drawn at currentRotation degrees; arrow is fixed at top (0deg).
+  // To bring angleCenter to top, we need to rotate wheel so that (currentRotation + angleCenter) % 360 == 0
+  // => targetBase = currentRotation - angleCenter (mod 360). We'll add multiples of 360 for nice turns.
+  let base = currentRotation - angleCenter;
+  // add several full spins for drama
+  const spins = 4 + Math.floor(rng()*2); // 4-5 spins
+  base += spins * 360;
+  return base;
+}
+
+/* High-level: spin to target number with springy overshoot, then settle */
+async function spinToNumber(num, forceFast = false) {
+  spinning = true;
+  stopBtn.disabled = false;
+  cancelSpin = false;
+
+  const target = rotationForNumber(num);
+  // overshoot a fraction of segment
+  const seg = 360 / N;
+  const overshoot = seg * 0.35;
+
+  const phase1 = new Promise(res=>{
+    animateRotation(
+      currentRotation,
+      target + overshoot,
+      forceFast ? 600 : 2200 + rng()*600,
+      (t)=> easeOutCubic(t),
+      (val)=>{ currentRotation = val; drawWheel(); },
+      res
+    );
+  });
+
+  await phase1;
+
+  const phase2 = new Promise(res=>{
+    animateRotation(
+      currentRotation,
+      target,
+      forceFast ? 250 : 500 + rng()*250,
+      (t)=> easeOutBack(t, 1.8),
+      (val)=>{ currentRotation = val; drawWheel(); },
+      res
+    );
+  });
+
+  await phase2;
+  stopBtn.disabled = true;
+  spinning = false;
+}
+
+/* ---------- Winners list UI ---------- */
+function renderWinners() {
+  winnersBox.innerHTML = '';
+  for (const n of winners) {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = n;
+    const x = document.createElement('div');
+    x.className = 'x';
+    x.textContent = '×';
+    x.title = 'Remove (return to pool)';
+    x.addEventListener('click', ()=>{
+      // remove from winners, return to pool
+      const idx = winners.indexOf(n);
+      if (idx >= 0) winners.splice(idx, 1);
+      available.add(n);
+      drawWheel();
+      renderWinners();
+    });
+    chip.appendChild(x);
+    winnersBox.appendChild(chip);
+  }
+}
+
+/* ---------- Draw orchestration ---------- */
+async function performOneDraw(forceFast=false) {
+  if (available.size === 0) return null;
+  // pick uniformly from available using seeded RNG
+  const arr = Array.from(available);
+  const pick = arr[Math.floor(rng() * arr.length)];
+  await spinToNumber(pick, forceFast || cancelSpin);
+  if (cancelSpin) cancelSpin = false; // reset
+
+  // finalize result
+  lastResultEl.textContent = pick;
+  winners.push(pick);
+  available.delete(pick);
+  renderWinners();
+  drawWheel();
+  return pick;
+}
+
+async function performMultipleDraws(count) {
+  for (let i = 0; i < count; i++) {
+    // if pool empties early, stop
+    if (available.size === 0) break;
+    await performOneDraw();
+    // pause 0.5s between draws (unless STOP is hit; then skip delay)
+    let waited = 0;
+    while (waited < 500 && !cancelSpin) {
+      await new Promise(r=> setTimeout(r, 50));
+      waited += 50;
+    }
+    if (cancelSpin) { cancelSpin = false; }
+  }
+}
+
+/* ---------- Wire up UI ---------- */
+function resetPool(newN) {
+  N = clamp(newN, 2, 360);
+  available = new Set(Array.from({length: N}, (_,i)=> i+1));
+  drawWheel();
+}
+
+function clearWinners() {
+  winners = [];
+  available = new Set(Array.from({length: N}, (_,i)=> i+1));
+  renderWinners();
+  lastResultEl.textContent = '—';
+  drawWheel();
+}
+
+seedBtn.addEventListener('click', ()=>{
+  seedInput.value = randomSeedString();
+  rng = makeRngFromSeed(seedInput.value);
+});
+
+seedInput.addEventListener('change', ()=>{
+  rng = makeRngFromSeed(seedInput.value || (seedInput.value = randomSeedString()));
+});
+
+maxInput.addEventListener('change', ()=>{
+  const v = clamp(parseInt(maxInput.value||'49',10), 2, 360);
+  maxInput.value = v;
+  // preserve existing winners if within new range; otherwise reset
+  if (winners.some(n => n > v)) {
+    winners = winners.filter(n => n <= v);
+  }
+  resetPool(v);
+  // remove already-won from pool
+  for (const w of winners) available.delete(w);
+  renderWinners();
+});
+
+drawsInput.addEventListener('change', ()=>{
+  const v = clamp(parseInt(drawsInput.value||'6',10), 1, 100);
+  drawsInput.value = v;
+});
+
+spinBtn.addEventListener('click', async ()=>{
+  if (spinning) return;
+  await performOneDraw();
+});
+spinAllBtn.addEventListener('click', async ()=>{
+  if (spinning) return;
+  const n = clamp(parseInt(drawsInput.value||'6',10), 1, 100);
+  await performMultipleDraws(n);
+});
+
+stopBtn.addEventListener('click', ()=>{
+  if (!spinning) return;
+  // Signal current animation to end quickly, then settle to current scheduled target
+  cancelSpin = true;
+});
+
+clearBtn.addEventListener('click', ()=>{
+  clearWinners();
+});
+
+document.addEventListener('keydown', (e)=>{
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (!spinning) performOneDraw();
+    else stopBtn.click();
+  }
+});
+
+/* ---------- Kick off ---------- */
+function init() {
+  seedInput.value = seedInput.value || randomSeedString();
+  rng = makeRngFromSeed(seedInput.value);
+  drawWheel();
+  renderWinners();
+}
+init();
+</script>
+</body>
+</html>
